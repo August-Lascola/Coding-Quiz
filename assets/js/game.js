@@ -1,6 +1,5 @@
 'use strict';
-// Global Variables used in functions
-const answers = document.querySelectorAll('.answer-btn').innerText;
+
 
 let questions = [
     {
@@ -40,9 +39,87 @@ let questions = [
     },
 ]
 
-console.log(answers);
-// Add functionality: Game Cycles through questions when button is pressed
+// Global Variables
+const questionPrompt = document.querySelector('#question-prompt')
+const questionProgress = document.querySelector('#questionProgress')
+const currentScore = document.querySelector('#current-score');
+const answers = Array.from(document.querySelectorAll('.answer-text'));
+console.log(answers)
+const MAX_QUESTIONS = 4;
+const SCORE_POINTS = 100;
 
-// Function to Change Text for Question/answers
+let questionInfo = {}
+let questionList = []
+let questionNumber = 0
+let score = 0
+let acceptingAnswers = true
 
-// Function to add event listener to button click
+
+// Begin Game Function
+beginGame = () => {
+    // Starting Conditions
+    questionNumber = 0
+    score = 0
+    questionList = [...questions]
+    switchQuestion()
+}
+
+
+// Switch Question Function
+switchQuestion = () => {
+    // Check if game needs to switch; if not, then send to highscores page
+    if(questionList.length === 0 || questionNumber > MAX_QUESTIONS) {
+        localStorage.setItem('mostRecentScore', score)
+
+        return window.location.assign("/highscores.html")
+    }
+    // Switch Question Number as well as Text on hud 
+    questionNumber++
+    questionProgress.innerText = `Question ${questionNumber} of ${MAX_QUESTIONS}`
+    // Change question prompt
+    const questionIndex = Math.floor(Math.random() * questionList.length)
+    questionInfo = questionList[questionIndex]
+    questionPrompt.innerText = questionInfo.question
+    // Change text for choices
+    answers.forEach(answer => {
+        const number = answer.dataset['number']
+        answer.innerText = questionInfo['choice' + number]
+    })
+
+    questionList.splice(questionIndex, 1)
+    acceptingAnswers = true
+}
+
+// Function to read button click and switch question
+answers.forEach(answer => {
+    answer.addEventListener('click', e => {
+        if(!acceptingAnswers) return
+
+        acceptingAnswers = false
+        const selectedChoice = e.target
+        const selectedAnswer = selectedChoice.dataset['number']
+        console.log(selectedChoice, selectedAnswer);
+        let classToApply = selectedAnswer == questionInfo.answer ? 'correct' :
+        'incorrect'
+
+        if(classToApply === 'correct') {
+            incrementScore(SCORE_POINTS)
+        }
+
+        selectedChoice.parentElement.classList.add(classToApply)
+
+        setTimeout(() => {
+            selectedChoice.parentElement.classList.remove(classToApply)
+            switchQuestion()
+        }, 1000)
+    })
+})
+
+incrementScore = num => {
+    score +=num
+    currentScore.innerText = score;
+}
+
+beginGame()
+
+
